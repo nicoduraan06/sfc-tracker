@@ -1,0 +1,1 @@
+ # SFC Tracker Dashboard visual centrado en el Sevilla FC: próximo partido, clasificación, plantilla y estadísticas, noticias, y una porra con clasificación de usuarios. Proyecto en desarrollo. Más documentación próximamente.
