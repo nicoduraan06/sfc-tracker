@@ -121,3 +121,38 @@ def sync_partidos():
     if filas:
         supabase.table("partidos").upsert(filas, on_conflict="fd_id").execute()
     return {"partidos_sincronizados": len(filas)}
+
+
+@app.post("/sync/clasificacion")
+def sync_clasificacion(jornada: int | None = None):
+    temporada_id = get_temporada_id()
+    params = {"matchday": jornada} if jornada else None
+    data = fd_get("/competitions/PD/standings", params)
+
+    total = next(s for s in data["standings"] if s["type"] == "TOTAL")
+    jornada_real = (
+        jornada
+        or data["season"].get("currentMatchday")
+        or max(f["playedGames"] for f in total["table"])
+    )
+
+    filas = [
+        {
+            "temporada_id": temporada_id,
+            "equipo": f["team"]["name"],
+            "jornada": jornada_real,
+            "posicion": f["position"],
+            "puntos": f["points"],
+            "partidos_jugados": f["playedGames"],
+            "ganados": f["won"],
+            "empatados": f["draw"],
+            "perdidos": f["lost"],
+            "goles_favor": f["goalsFor"],
+            "goles_contra": f["goalsAgainst"],
+        }
+        for f in total["table"]
+    ]
+    supabase.table("clasificacion_historico").upsert(
+        filas, on_conflict="temporada_id,equipo,jornada"
+    ).execute()
+    return {"jornada": jornada_real, "equipos_sincronizados": len(filas)}
