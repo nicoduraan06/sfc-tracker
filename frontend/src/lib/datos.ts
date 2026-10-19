@@ -3,6 +3,15 @@ import type { ResultadoPartido } from "@/components/Racha";
 import type { FilaClasificacion } from "@/components/TablaClasificacion";
 import { supabase } from "@/lib/supabase";
 
+export type JugadorPlantilla = {
+  id: string;
+  nombre: string;
+  dorsal: number | null;
+  posicion: string | null;
+  goles: number;
+  asistencias: number;
+};
+
 // La temporada actual es la que tiene la fecha de inicio más reciente
 async function getTemporadaActualId() {
   const { data } = await supabase
@@ -61,4 +70,38 @@ export async function getClasificacion() {
     .order("posicion", { ascending: true });
 
   return { jornada, filas: (data ?? []) as FilaClasificacion[] };
+}
+
+export async function getPlantilla(): Promise<JugadorPlantilla[]> {
+  const temporadaId = await getTemporadaActualId();
+  if (!temporadaId) return [];
+
+  const [jugadores, estadisticas] = await Promise.all([
+    supabase
+      .from("jugadores")
+      .select("id, nombre, dorsal, posicion")
+      .eq("activo", true),
+    supabase
+      .from("estadisticas_jugador")
+      .select("jugador_id, goles, asistencias")
+      .eq("temporada_id", temporadaId),
+  ]);
+
+  // Suma de todas las competiciones de la temporada, por jugador
+  const totales = new Map<string, { goles: number; asistencias: number }>();
+  for (const e of estadisticas.data ?? []) {
+    const t = totales.get(e.jugador_id) ?? { goles: 0, asistencias: 0 };
+    t.goles += e.goles ?? 0;
+    t.asistencias += e.asistencias ?? 0;
+    totales.set(e.jugador_id, t);
+  }
+
+  return (jugadores.data ?? []).map((j) => ({
+    id: j.id,
+    nombre: j.nombre,
+    dorsal: j.dorsal,
+    posicion: j.posicion,
+    goles: totales.get(j.id)?.goles ?? 0,
+    asistencias: totales.get(j.id)?.asistencias ?? 0,
+  }));
 }

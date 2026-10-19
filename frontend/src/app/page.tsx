@@ -18,11 +18,7 @@ export default async function Home() {
   ]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center gap-6 bg-neutral-950 px-4 py-10 text-white">
-      <h1 className="mb-2 text-2xl font-bold tracking-tight">
-        SFC <span className="text-red-500">Tracker</span>
-      </h1>
-
+    <main className="flex flex-col items-center gap-6 px-4 py-8">
       {partido ? (
         <ProximoPartido partido={partido} />
       ) : (
