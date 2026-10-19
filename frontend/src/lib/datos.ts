@@ -1,4 +1,5 @@
 import type { Partido } from "@/components/ProximoPartido";
+import type { ResultadoPartido } from "@/components/Racha";
 import type { FilaClasificacion } from "@/components/TablaClasificacion";
 import { supabase } from "@/lib/supabase";
 
@@ -23,6 +24,18 @@ export async function getProximoPartido() {
     .order("fecha", { ascending: true })
     .limit(1);
   return (data?.[0] ?? null) as Partido | null;
+}
+
+export async function getUltimosResultados(limite = 5) {
+  const { data } = await supabase
+    .from("partidos")
+    .select("id, rival, fecha, competicion, es_local, goles_sevilla, goles_rival")
+    .eq("estado", "finalizado")
+    .not("goles_sevilla", "is", null)
+    .not("goles_rival", "is", null)
+    .order("fecha", { ascending: false })
+    .limit(limite);
+  return (data ?? []) as ResultadoPartido[];
 }
 
 export async function getClasificacion() {
