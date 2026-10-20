@@ -14,16 +14,23 @@ export type Partido = {
 const dosDigitos = (n: number) => String(n).padStart(2, "0");
 
 export default function ProximoPartido({ partido }: { partido: Partido }) {
-  const [ahora, setAhora] = useState(() => Date.now());
+  // Hasta que el componente está en el navegador no hay "ahora" (null): así el
+  // servidor y el navegador pintan exactamente lo mismo al hidratar.
+  const [ahora, setAhora] = useState<number | null>(null);
 
   useEffect(() => {
-    const id = setInterval(() => setAhora(Date.now()), 1000);
-    return () => clearInterval(id);
+    const actualizar = () => setAhora(Date.now());
+    const primero = setTimeout(actualizar, 0);
+    const id = setInterval(actualizar, 1000);
+    return () => {
+      clearTimeout(primero);
+      clearInterval(id);
+    };
   }, []);
 
   const fecha = new Date(partido.fecha);
-  const ms = fecha.getTime() - ahora;
-  const empezado = ms <= 0;
+  const ms = ahora === null ? null : fecha.getTime() - ahora;
+  const empezado = ms !== null && ms <= 0;
 
   // La API manda 00:00 UTC cuando la liga aún no ha fijado la hora
   const horaPorConfirmar =
@@ -45,12 +52,21 @@ export default function ProximoPartido({ partido }: { partido: Partido }) {
   const local = partido.es_local ? "Sevilla FC" : partido.rival;
   const visitante = partido.es_local ? partido.rival : "Sevilla FC";
 
-  const totalSegundos = Math.max(0, Math.floor(ms / 1000));
+  const segundos = ms === null ? null : Math.max(0, Math.floor(ms / 1000));
   const unidades = [
-    { etiqueta: "días", valor: Math.floor(totalSegundos / 86400) },
-    { etiqueta: "horas", valor: Math.floor((totalSegundos % 86400) / 3600) },
-    { etiqueta: "min", valor: Math.floor((totalSegundos % 3600) / 60) },
-    { etiqueta: "seg", valor: totalSegundos % 60 },
+    {
+      etiqueta: "días",
+      valor: segundos === null ? null : Math.floor(segundos / 86400),
+    },
+    {
+      etiqueta: "horas",
+      valor: segundos === null ? null : Math.floor((segundos % 86400) / 3600),
+    },
+    {
+      etiqueta: "min",
+      valor: segundos === null ? null : Math.floor((segundos % 3600) / 60),
+    },
+    { etiqueta: "seg", valor: segundos === null ? null : segundos % 60 },
   ];
 
   return (
@@ -71,7 +87,7 @@ export default function ProximoPartido({ partido }: { partido: Partido }) {
       </p>
 
       {!horaPorConfirmar && (
-        <div className="mt-6" suppressHydrationWarning>
+        <div className="mt-6">
           {empezado ? (
             <p className="text-center text-lg font-semibold text-red-500">
               {partido.estado === "en_directo" ? "¡En juego!" : "Ya ha comenzado"}
@@ -81,7 +97,7 @@ export default function ProximoPartido({ partido }: { partido: Partido }) {
               {unidades.map((u) => (
                 <div key={u.etiqueta} className="rounded-xl bg-neutral-800 py-3">
                   <p className="text-2xl font-bold tabular-nums sm:text-3xl">
-                    {dosDigitos(u.valor)}
+                    {u.valor === null ? "--" : dosDigitos(u.valor)}
                   </p>
                   <p className="text-xs uppercase tracking-wide text-neutral-400">
                     {u.etiqueta}
