@@ -244,6 +244,12 @@ export default function PorraPage() {
           Pronostica el resultado exacto antes de que empiece el partido: 3
           puntos si lo clavas, 1 si aciertas quién gana (o el empate).
         </p>
+        <Link
+          href="/porra/clasificacion"
+          className="mt-3 inline-block text-sm text-red-400 hover:underline"
+        >
+          Ver la clasificación →
+        </Link>
       </div>
 
       {usuario === undefined && <p className="text-neutral-400">Cargando…</p>}
