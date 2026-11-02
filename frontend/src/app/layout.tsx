@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import InstalarApp from "@/components/InstalarApp";
 import Navegacion from "@/components/Navegacion";
 import "./globals.css";
 
@@ -12,6 +13,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "SFC Tracker",
   description: "Dashboard visual del Sevilla FC",
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: {
+    capable: true,
+    title: "SFC Tracker",
+    statusBarStyle: "black",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({
@@ -23,6 +34,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-neutral-950 text-white antialiased`}
       >
         <Navegacion />
+        <InstalarApp />
         {children}
       </body>
     </html>
