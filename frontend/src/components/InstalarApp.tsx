@@ -7,10 +7,12 @@ type EventoInstalacion = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
+type Modo = "oculto" | "android" | "android-manual" | "ios";
+
 const CLAVE = "sfc-instalar-descartado";
 
 export default function InstalarApp() {
-  const [modo, setModo] = useState<"oculto" | "android" | "ios">("oculto");
+  const [modo, setModo] = useState<Modo>("oculto");
   const [evento, setEvento] = useState<EventoInstalacion | null>(null);
 
   useEffect(() => {
@@ -29,8 +31,9 @@ export default function InstalarApp() {
     const esIos =
       /iphone|ipad|ipod/i.test(ua) ||
       (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    const esAndroid = /android/i.test(ua);
 
-    // Android y Chrome de escritorio avisan cuando la app se puede instalar
+    // Chrome avisa cuando la app se puede instalar con un botón
     const alPoderInstalar = (e: Event) => {
       e.preventDefault();
       setEvento(e as EventoInstalacion);
@@ -38,12 +41,21 @@ export default function InstalarApp() {
     };
     window.addEventListener("beforeinstallprompt", alPoderInstalar);
 
-    const t = setTimeout(() => {
-      if (esIos) setModo("ios");
-    }, 0);
+    const temporizadores: ReturnType<typeof setTimeout>[] = [];
+    if (esIos) {
+      temporizadores.push(setTimeout(() => setModo("ios"), 0));
+    } else if (esAndroid) {
+      // Si Chrome no ofrece el botón, enseñamos los pasos a mano
+      temporizadores.push(
+        setTimeout(
+          () => setModo((m) => (m === "oculto" ? "android-manual" : m)),
+          2500,
+        ),
+      );
+    }
 
     return () => {
-      clearTimeout(t);
+      temporizadores.forEach(clearTimeout);
       window.removeEventListener("beforeinstallprompt", alPoderInstalar);
     };
   }, []);
@@ -82,7 +94,7 @@ export default function InstalarApp() {
           </button>
         </div>
 
-        {modo === "android" ? (
+        {modo === "android" && (
           <>
             <p className="mt-1 text-neutral-300">
               Ábrela como una app, a pantalla completa y con avisos de partido.
@@ -95,7 +107,23 @@ export default function InstalarApp() {
               Instalar
             </button>
           </>
-        ) : (
+        )}
+
+        {modo === "android-manual" && (
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-neutral-300">
+            <li>
+              Abre el menú <strong>⋮</strong> del navegador (arriba a la
+              derecha).
+            </li>
+            <li>
+              Elige <strong>Instalar aplicación</strong> o{" "}
+              <strong>Añadir a pantalla de inicio</strong>.
+            </li>
+            <li>Abre SFC Tracker desde el icono nuevo.</li>
+          </ol>
+        )}
+
+        {modo === "ios" && (
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-neutral-300">
             <li>
               Pulsa el botón <strong>Compartir</strong> (el cuadrado con la

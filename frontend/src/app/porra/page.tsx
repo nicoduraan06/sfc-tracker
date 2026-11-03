@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useUsuario } from "@/lib/useUsuario";
+import BotonNotificaciones from "@/components/BotonNotificaciones";
 
 type PartidoPorra = {
   id: string;
@@ -251,6 +252,8 @@ export default function PorraPage() {
           Ver la clasificación →
         </Link>
       </div>
+
+      {usuario && <BotonNotificaciones />}
 
       {usuario === undefined && <p className="text-neutral-400">Cargando…</p>}
 

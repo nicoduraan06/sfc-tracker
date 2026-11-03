@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import InstalarApp from "@/components/InstalarApp";
 import Navegacion from "@/components/Navegacion";
+import OneSignalInit from "@/components/OneSignalInit";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -36,6 +37,7 @@ export default function RootLayout({
         <Navegacion />
         <InstalarApp />
         {children}
+        <OneSignalInit />
       </body>
     </html>
   );
