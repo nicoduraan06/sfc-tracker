@@ -115,16 +115,22 @@ def sync_noticias() -> dict:
     formato = "%Y-%m-%dT%H:%M:%SZ"
     claves = _claves_plantilla()
 
-    # Lo que ya guardamos en los últimos días, para no repetir
+    # Lo que ya guardamos en el último mes: sus enlaces, para no repetir ninguna noticia,
+    # y los titulares de los últimos 3 días, para detectar la misma noticia en otro medio
     previas = (
         supabase.table("noticias")
-        .select("titulo, url")
-        .gte("fecha", (ahora - timedelta(days=3)).strftime(formato))
+        .select("titulo, url, fecha")
+        .gte("fecha", limite.strftime(formato))
         .execute()
         .data
     )
     urls = {p["url"] for p in previas if p.get("url")}
-    vistos = [_palabras(p["titulo"]) for p in previas]
+    desde_3_dias = ahora - timedelta(days=3)
+    vistos = [
+        _palabras(p["titulo"])
+        for p in previas
+        if datetime.fromisoformat(p["fecha"].replace("Z", "+00:00")) >= desde_3_dias
+    ]
 
     nuevas = []
     por_fuente = {}
